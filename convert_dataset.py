@@ -28,6 +28,5 @@ for index, row in tqdm(df.iterrows()):
 
 df['bytes'] = byteArray
 
-df.drop(columns=['path'])
-
-df.to_csv('coil.csv', sep=',', encoding='utf-8')
+df.drop(columns=['path']).to_csv(
+    'coil.csv', sep=',', index=False, encoding='utf-8')
