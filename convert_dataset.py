@@ -29,7 +29,7 @@ for index, row in tqdm(df.iterrows()):
     # transforma os bytes em array
     arr = np.array(img)
     # faz do array flat
-    flat_arr = arr.ravel()
+    flat_arr = arr.ravel().tolist()
     # da append na variavel de byteArray
     byteArray.append(flat_arr)
 
