@@ -47,13 +47,15 @@ byteArray = []
 for index, row in tqdm(df.iterrows()):
     # converte a imagem para escala L e usa como dithering o algoritmo de FLOYDSTEINBERG
 
-    img = Image.open(row["path"]).convert("L", dither=Image.FLOYDSTEINBERG)
+    #img = Image.open(row["path"]).convert("L", dither=Image.FLOYDSTEINBERG)
 
     # SEM ADAPTIVE MEAN ThRESHOLD
-    # binaryImage = Image.open(row["path"]).convert(
-    # "1", dither=Image.FLOYDSTEINBERG)
+    #binaryImage = Image.open(row["path"]).convert("1", dither=Image.FLOYDSTEINBERG)
+
     # COM FILTRO
+    img = Image.open(row["path"]).convert("L", dither=Image.FLOYDSTEINBERG)
     binaryImage = filter(img)
+    #img.show()
 
     # transforma os bytes em array
     arr = np.array(binaryImage)
@@ -66,14 +68,17 @@ for index, row in tqdm(df.iterrows()):
 df['bytes'] = byteArray
 
 # dropa a coluna "path" por não ter mais uso e salva um csv localmente
-df.drop(columns=['path']).to_csv(
-    'coil.csv', sep=',', index=False, encoding='utf-8')
+del df['path']
+df.to_csv('coil.csv', sep=',', index=False, encoding='utf-8')
+#df.drop(columns=['path']).to_csv(
+#    'coil.csv', sep=',', index=False, encoding='utf-8')
 
-n_folds = 3
+
+n_folds = 5
 address = 15
 labels = df['label'].values
 minScore = 0.1
-discriminatorLimit = 3
+discriminatorLimit = 5
 threshold = 24
 
 print("Número de folds: ", n_folds)
@@ -83,10 +88,11 @@ kfold = KFold(n_folds, shuffle=True)
 
 acuracia_list = []
 acertos_list = []
+desvio_list=[]
 for train_ix, test_ix in kfold.split(byteArray):
-    wsd = wp.Wisard(address, ignoreZero=False, verbose=False)
-    # wsd = wp.ClusWisard(address, minScore, threshold,
-    #                     discriminatorLimit, verbose=False)
+    #wsd = wp.Wisard(address, ignoreZero=False, verbose=False)
+    wsd = wp.ClusWisard(address, minScore, threshold,
+                        discriminatorLimit, verbose=False)
 
     trainX, trainY, testX, testY = np.take(
         byteArray, train_ix, 0), np.take(labels, train_ix, 0), np.take(byteArray, test_ix, 0), np.take(labels, test_ix, 0)
@@ -104,81 +110,108 @@ for train_ix, test_ix in kfold.split(byteArray):
     print("Matriz de confusão:")
     print(confusion_matrix(testY, out))
 
-    # array = confusion_matrix(testY, out)
-    # df_cm = pd.DataFrame(array, index = [i for i in "0123456789"],
-    #                 columns = [i for i in "0123456789"])
-    # plt.figure(figsize = (10,10))
-    # sn.heatmap(df_cm, annot=True, cmap="RdPu")
+    array = confusion_matrix(testY, out)
+    
+    # col = ['obj %s' %(i) for i in range(0,100)]
+    # df_cm = pd.DataFrame(array, index= col, columns = col)
+    # plt.figure(figsize = (100,100))
+    # sn.heatmap(df_cm, cmap='viridis', annot=True)
     # plt.show()
+    
+    plt.matshow(array)
+    plt.show()
 
-    # print("Acurácia: ", (acertos/len(out))*100)
     ac_score = accuracy_score(testY, out, normalize=True)
     acerto = accuracy_score(testY, out, normalize=False)
     acuracia_list.append(ac_score)
     acertos_list.append(acerto)
     patterns = wsd.getMentalImages()
+    
     print("Imagem Mental:")
+
+    #cluswisard
+    # print("Mapa mental...")
+    
+    # cluster2 = patterns["obj11"]
+    # for index,discriminator in enumerate(cluster2):
+    #     pixels = np.array(discriminator)
+    #     pixels = pixels.reshape((128, 128))
+    #     plt.imshow(pixels, cmap='viridis')
+    #     plt.show()
+    
+    # cluster2 = patterns["obj12"]
+    # for index,discriminator in enumerate(cluster2):
+    #     pixels = np.array(discriminator)
+    #     pixels = pixels.reshape((128, 128))
+    #     plt.imshow(pixels, cmap='viridis')
+    #     plt.show()
+
+    # cluster2 = patterns["obj2"]
+    # for index,discriminator in enumerate(cluster2):
+    #     pixels = np.array(discriminator)
+    #     pixels = pixels.reshape((128, 128))
+    #     plt.imshow(pixels, cmap='viridis')
+    #     plt.show()
+
+
+
+    # cluster2 = patterns["obj22"]
+    # for index,discriminator in enumerate(cluster2):
+    #     pixels = np.array(discriminator)
+    #     pixels = pixels.reshape((128, 128))
+    #     plt.imshow(pixels, cmap='viridis')
+    #     plt.show()
+     
+
     # for key in patterns:
-    #     #print(key, patterns[key])
-    #       pixels = np.array(patterns[key], dtype='uint8')
-    #       pixels = pixels.reshape((28, 28))
-    #       plt.imshow(pixels, cmap='viridis')
-    #       plt.show()
-    # pixels0 = np.array(patterns["0"])
-    # pixels0 = pixels0.reshape((28, 28))
-    # plt.imshow(pixels0, cmap='viridis')
+    #     print(key, patterns[key])
+    #     pixels = np.array(patterns[key], dtype='uint8')
+    #     #pixels = pixels.reshape((128, 128))
+    #     plt.imshow(pixels, cmap='viridis')
+    #     plt.show()
+
+    # pixels = np.array(patterns["obj1"])
+    # pixels = pixels.reshape((128, 128))
+    # plt.imshow(pixels, cmap='viridis')
     # plt.show()
 
-    # pixels1 = np.array(patterns["1"])
-    # pixels1 = pixels1.reshape((28, 28))
-    # plt.imshow(pixels1, cmap='viridis')
+    # pixels = np.array(patterns["obj11"])
+    # pixels = pixels.reshape((128, 128))
+    # plt.imshow(pixels, cmap='viridis')
     # plt.show()
 
-    # pixels2 = np.array(patterns["2"])
-    # pixels2 = pixels2.reshape((28, 28))
-    # plt.imshow(pixels2, cmap='viridis')
+    # pixels = np.array(patterns["obj12"])
+    # pixels = pixels.reshape((128, 128))
+    # plt.imshow(pixels, cmap='viridis')
     # plt.show()
 
-    # pixels3 = np.array(patterns["3"])
-    # pixels3 = pixels3.reshape((28, 28))
-    # plt.imshow(pixels3, cmap='viridis')
+    # pixels = np.array(patterns["obj2"])
+    # pixels = pixels.reshape((128, 128))
+    # plt.imshow(pixels, cmap='viridis')
     # plt.show()
 
-    # pixels4 = np.array(patterns["4"])
-    # pixels4 = pixels4.reshape((28, 28))
-    # plt.imshow(pixels4, cmap='viridis')
+    # pixels = np.array(patterns["obj21"])
+    # pixels = pixels.reshape((128, 128))
+    # plt.imshow(pixels, cmap='viridis')
     # plt.show()
 
-    # pixels5 = np.array(patterns["5"])
-    # pixels5 = pixels5.reshape((28, 28))
-    # plt.imshow(pixels5, cmap='viridis')
+    # pixels = np.array(patterns["obj22"])
+    # pixels = pixels.reshape((128, 128))
+    # plt.imshow(pixels, cmap='viridis')
     # plt.show()
 
-    # pixels6 = np.array(patterns["6"])
-    # pixels6 = pixels6.reshape((28, 28))
-    # plt.imshow(pixels6, cmap='viridis')
-    # plt.show()
-
-    # pixels7 = np.array(patterns["7"])
-    # pixels7 = pixels7.reshape((28, 28))
-    # plt.imshow(pixels7, cmap='viridis')
-    # plt.show()
-
-    # pixels8 = np.array(patterns["8"])
-    # pixels8 = pixels8.reshape((28, 28))
-    # plt.imshow(pixels8, cmap='viridis')
-    # plt.show()
-
-    # pixels9 = np.array(patterns["9"])
-    # pixels9 = pixels9.reshape((28, 28))
-    # plt.imshow(pixels9, cmap='viridis')
+    # pixels = np.array(patterns["obj3"])
+    # pixels = pixels.reshape((128, 128))
+    # plt.imshow(pixels, cmap='viridis')
     # plt.show()
 
     print("Numero de acertos:", acerto)
     print("Porcentagem em acuracy_score:", ac_score)
     print("Porcentagem em acuracy_score com % :", ac_score*100)
+    desvio_list.append(ac_score*100)
 
 print("Media Acurácia:", np.mean(acuracia_list))
 print("Média Variância:", np.var(acuracia_list))
 print("Média Desvio Padrão:", np.std(acuracia_list))
+print("Média Desvio Padrao * 100:", np.std(desvio_list))
 print("Média de acertos:", np.mean(acertos_list))
